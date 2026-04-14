@@ -1,31 +1,159 @@
-import 'dart:io';
-import '../lib/student.dart';
-import '../lib/grade_calculator.dart';
+import 'package:flutter/material.dart';
 
 void main() {
+  runApp(StudentApp());
+}
 
-  print("===== STUDENT GRADE CALCULATOR =====");
+class StudentApp extends StatelessWidget {
+  const StudentApp({super.key});
 
-  // Input student name
-  stdout.write("Enter Student Name: ");
-  String name = stdin.readLineSync()!;
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: StudentPage(),
+    );
+  }
+}
 
-  // Input student score
-  stdout.write("Enter Student Score: ");
-  double score = double.parse(stdin.readLineSync()!);
+class Student {
+  String id;
+  String name;
+  String email;
+  String course;
+  double score;
+  String grade;
 
-  // Create Student Object
-  Student student = Student(name, score);
+  Student(this.id, this.name, this.email, this.course, this.score, this.grade);
+}
 
-  // Create GradeCalculator Object
-  GradeCalculator calculator = GradeCalculator();
+class StudentPage extends StatefulWidget {
+  const StudentPage({super.key});
 
-  // Calculate grade
-  String grade = calculator.calculateGrade(student.score);
+  @override
+  _StudentPageState createState() => _StudentPageState();
+}
 
-  // Display result
-  print("\n===== STUDENT RESULT =====");
-  print("Name  : ${student.name}");
-  print("Score : ${student.score}");
-  print("Grade : $grade");
+class _StudentPageState extends State<StudentPage> {
+  final idController = TextEditingController();
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final courseController = TextEditingController();
+  final scoreController = TextEditingController();
+
+  List<Student> students = [];
+
+  String calculateGrade(double score) {
+    if (score >= 80) return "A";
+    if (score >= 70) return "B";
+    if (score >= 60) return "C";
+    if (score >= 50) return "D";
+    return "F";
+  }
+
+  void addStudent() {
+    String id = idController.text;
+    String name = nameController.text;
+    String email = emailController.text;
+    String course = courseController.text;
+    double score = double.tryParse(scoreController.text) ?? 0;
+
+    if (id.isEmpty ||
+        name.isEmpty ||
+        email.isEmpty ||
+        course.isEmpty) {
+      return;
+    }
+
+    String grade = calculateGrade(score);
+
+    setState(() {
+      students.add(Student(id, name, email, course, score, grade));
+    });
+
+    clearFields();
+  }
+
+  void clearFields() {
+    idController.clear();
+    nameController.clear();
+    emailController.clear();
+    courseController.clear();
+    scoreController.clear();
+  }
+
+  void deleteStudent(int index) {
+    setState(() {
+      students.removeAt(index);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Student Manager"),
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          children: [
+            // INPUT FIELDS
+            TextField(
+              controller: idController,
+              decoration: InputDecoration(labelText: "Student ID"),
+            ),
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(labelText: "Name"),
+            ),
+            TextField(
+              controller: emailController,
+              decoration: InputDecoration(labelText: "Email"),
+            ),
+            TextField(
+              controller: courseController,
+              decoration: InputDecoration(labelText: "Course"),
+            ),
+            TextField(
+              controller: scoreController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: "Score"),
+            ),
+
+            SizedBox(height: 10),
+
+            ElevatedButton(
+              onPressed: addStudent,
+              child: Text("Add Student"),
+            ),
+
+            SizedBox(height: 10),
+
+            // TABLE HEADER
+            Expanded(
+              child: ListView.builder(
+                itemCount: students.length,
+                itemBuilder: (context, index) {
+                  final s = students[index];
+                  return Card(
+                    child: ListTile(
+                      title: Text("${s.name} (${s.id})"),
+                      subtitle: Text(
+                          "Email: ${s.email}\nCourse: ${s.course}\nScore: ${s.score} | Grade: ${s.grade}"),
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => deleteStudent(index),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
